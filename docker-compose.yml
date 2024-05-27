@@ -39,14 +39,14 @@ services:
     image: 7upnamk/vie-front:latest
     container_name: nginx
     environment:
-      - REACT_APP_API_BASE_URL=https://jsonplaceholder.typicode.com
-      - REACT_APP_USERS_ENDPOINT=/users
+      - REACT_APP_API_BASE_URL=https://vieback:5000
+      - REACT_APP_USERS_ENDPOINT=/students
     ports:
       - 80:80
     networks:
       - frontend
     depends_on:
-      - flask_app
+      - vieback
 
 networks:
   frontend:
