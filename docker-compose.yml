@@ -21,7 +21,6 @@ services:
 
   vieback:
     image: 7upnamk/vie-back:latest
-    build: .
     container_name: flask
     restart: unless-stopped
     environment:
@@ -39,7 +38,7 @@ services:
     image: 7upnamk/vie-front:latest
     container_name: nginx
     environment:
-      - REACT_APP_API_BASE_URL=https://vieback:5000
+      - REACT_APP_API_BASE_URL=http://vieback:5000
       - REACT_APP_USERS_ENDPOINT=/students
     ports:
       - 80:80
