@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from init import init_data
 from bson import ObjectId
 from utils import insert_attendee, delete_attendee, create_student_from_form, create_formatted_student
 import os
 from pymongo import MongoClient
 
+app = Flask(__name__)
+CORS(app)
 
 def create_app(students_collection):
     app = Flask(__name__)
