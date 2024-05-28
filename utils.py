@@ -1,42 +1,31 @@
-from bson import ObjectId
-
 
 def insert_attendee(collection, attendee):
     if collection.find_one(sort=[("stt", -1)]):
         attendee['stt'] = int(collection.find_one(sort=[("stt", -1)])["stt"]) + 1
     else:
         attendee['stt'] = 1
-    result = collection.insert_one(attendee)
-    return result
+    collection.insert_one(attendee)
+    return attendee['stt']
 
 
 def delete_attendee(collection, attendee_id):
-    attendee = collection.find_one({"_id": ObjectId(attendee_id)})
+    attendee = collection.find_one({"stt": attendee_id})
     if attendee:
-        stt = attendee["stt"]
-        collection.delete_one({"_id": ObjectId(attendee_id)})
-        collection.update_many({"stt": {"$gt": stt}}, {"$inc": {"stt": -1}})
+        collection.delete_one({"stt": attendee_id})
 
 
-def create_student_from_form(form):
+def create_student_from_json(json):
     return {
-        'name': form['name'],
-        'username': form['username'],
-        'birth_year': form['birth_year'],
-        'gender': form['gender'],
-        'university': form['university'],
-        'major': form['major']
+        'name': json.get('name'),
+        'gender': json.get('gender'),
+        'university': json.get('university'),
     }
 
 
 def create_formatted_student(student):
     return {
-        '_id': str(student['_id']),
         'stt': student['stt'],
         'name': student['name'],
-        'username': student['username'],
-        'birth_year': student['birth_year'],
         'gender': student['gender'],
         'university': student['university'],
-        'major': student['major']
     }

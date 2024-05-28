@@ -2,15 +2,22 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from init import init_data
 from bson import ObjectId
-from utils import insert_attendee, delete_attendee, create_student_from_form, create_formatted_student
+from utils import insert_attendee, delete_attendee, create_student_from_json, create_formatted_student
 import os
 from pymongo import MongoClient
 
-app = Flask(__name__)
-CORS(app)
+
 
 def create_app(students_collection):
     app = Flask(__name__)
+    # CORS(app, resources={r"/*": {"origins": "*", "methods": "*", "headers": "Content-Type"}})
+
+    @app.after_request
+    def handle_options(response):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
+        return response
     @app.route('/')
     def index():
         return "index"
@@ -23,25 +30,26 @@ def create_app(students_collection):
 
     @app.route('/students', methods=['POST'])
     def add_students():
-        student = create_student_from_form(request.form)
-        insert_attendee(students_collection, student)
-        return jsonify({'message': 'Student added successfully'})
+        student = create_student_from_json(request.get_json())
+        stt = insert_attendee(students_collection, student)
+        return jsonify({"stt":stt})
 
 
-    @app.route('/students/<student_id>', methods=['PUT'])
-    def edit_student(student_id):
+    @app.route('/students/<_id>', methods=['PUT'])
+    def edit_student(_id):
+        student_id = int(_id)
         if student_id is not None:
-            student = students_collection.find_one({'_id': ObjectId(student_id)})
-            if student:
-                formatted_student = create_formatted_student(student)
-                return jsonify(formatted_student)
+            student_org = students_collection.find_one({'stt': student_id})
+            if student_org:
+                student = create_student_from_json(request.get_json())
+                students_collection.update_one({"stt": student_id}, {"$set": student})
+                return jsonify({'message': 'Student Details Updated Successfully'})
 
-        student = create_student_from_form(request.form)
-        students_collection.update_one({"_id": ObjectId(student_id)}, {"$set": student})
-        return jsonify({'message': 'Student Details Updated Successfully'})
+        
 
-    @app.route('/students/<student_id>', methods=['DELETE'])
-    def delete_student(student_id):
+    @app.route('/students/<_id>', methods=['DELETE'])
+    def delete_student(_id):
+        student_id = int(_id)
         delete_attendee(students_collection, student_id)
         return jsonify({'message': 'Student Details Deleted Successfully'})
     return app
