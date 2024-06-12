@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from init import init_data
 from bson import ObjectId
@@ -6,7 +6,7 @@ from utils import insert_attendee, delete_attendee, create_student_from_json, cr
 import os
 from pymongo import MongoClient
 from prometheus_client import Counter, Gauge, generate_latest
-
+import random
 
 
 def create_app(students_collection):
@@ -54,6 +54,8 @@ def create_app(students_collection):
         delete_attendee(students_collection, student_id)
         return jsonify({'message': 'Student Details Deleted Successfully'})
     
+    CONTENT_TYPE_LATEST = str('text/plain; version=0.0.4; charset=utf-8')
+
     number_of_requests = Counter(
         'number_of_requests',
         'The number of requests, its a counter so the value can increase or reset to zero.'
