@@ -5,6 +5,7 @@ from bson import ObjectId
 from utils import insert_attendee, delete_attendee, create_student_from_json, create_formatted_student
 import os
 from pymongo import MongoClient
+from prometheus_client import Counter, Gauge, generate_latest
 
 
 
@@ -52,6 +53,25 @@ def create_app(students_collection):
         student_id = int(_id)
         delete_attendee(students_collection, student_id)
         return jsonify({'message': 'Student Details Deleted Successfully'})
+    
+    number_of_requests = Counter(
+        'number_of_requests',
+        'The number of requests, its a counter so the value can increase or reset to zero.'
+    )
+
+    current_memory_usage = Gauge(
+        'current_memory_usage_locally',
+        'The current value of memory usage, its a gauge so it can go up or down.',
+        ['server_name']
+    )
+
+    @app.route('/metrics', methods=['GET'])
+    def get_data():
+        """Returns all data as plaintext."""
+        number_of_requests.inc()
+        current_memory_usage.labels('server-a').set(random.randint(10000,90000))
+        return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
     return app
 
 
