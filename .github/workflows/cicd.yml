@@ -54,12 +54,11 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/vie-back:latest
+        run: |
+          tag=${GITHUB_REF#refs/tags/}
+          username=${{ secrets.DOCKER_USERNAME }}
+          docker build -t $username/vie-front:$tag .
+          docker push $username/vie-back:$tag
 
   change-image-tag:
     runs-on: ubuntu-latest
