@@ -37,7 +37,7 @@ jobs:
           extra-flake8-options: "--exit-zero --max-line-length=127"
 
   build-and-push-docker:
-    runs-on: ubuntu-law
+    runs-on: ubuntu-latest
     needs: build-and-test
 
     steps:
