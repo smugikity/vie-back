@@ -2,8 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 jobs:
   build-and-test:
@@ -61,4 +61,39 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/vie-back:latest
 
+  change-image-tag:
+    runs-on: ubuntu-latest
+    needs: build-and-push-docker
+    environment: ci
+    permissions:
+      contents: write
+      pull-requests: write 
+      issues: write
+    env:
+      TAG: ${GITHUB_REF#refs/tags/}
+    steps:
+      - uses: actions/checkout@v4
+        name: Change the deployment of git repo
+        with:
+          repository: smugikity/vdt-config-api
+          token: ${{ secrets.GIT_TOKENN }}
+          ref: main
+      - name: Change image tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo $TAG
+          echo “Working Directory: $(pwd)”
+          sed -i "s/^ *tag:.*$/  tag: $TAG/" values.yaml
+          # Print values.yaml for debugging after changes
+          # echo “After modification:”
+          # cat values.yaml  
+
+      - name: Publish new image
+        run: |
+          git config user.email github-actions@github.com
+          git config user.name github-actions
+          # rm values.yaml.bak
+          git add values.yaml
+          git commit -m "Update image tag, manifest: ${{ github.run_number }}"
+          git push 
 
