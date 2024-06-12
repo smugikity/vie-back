@@ -57,7 +57,7 @@ jobs:
         run: |
           tag=${GITHUB_REF#refs/tags/}
           username=${{ secrets.DOCKER_USERNAME }}
-          docker build -t $username/vie-front:$tag .
+          docker build -t $username/vie-back:$tag .
           docker push $username/vie-back:$tag
 
   change-image-tag:
