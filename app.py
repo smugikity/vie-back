@@ -8,6 +8,42 @@ from pymongo import MongoClient
 from prometheus_client import Counter, Gauge, generate_latest
 import random
 import logging
+from werkzeug.security import generate_password_hash, check_password_hash
+
+users = {
+    "user1": {
+        "username": "user1",
+        "password": generate_password_hash("user"),  # Hashed password
+        "role": "user"
+    },
+    "admin": {
+        "username": "admin",
+        "password": generate_password_hash("admin"),  # Hashed password
+        "role": "admin"
+    }
+}
+
+def authenticate(username, password):
+    user = users.get(username)
+    if not user:
+        return False
+    return check_password_hash(user["password"], password)
+
+def requires_auth(role="user"):
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            auth = request.authorization  # Get authorization header
+
+            if not auth or not authenticate(auth.username, auth.password):
+                abort(401, "Authorization required")
+
+            if role == "admin" and users[auth.username]["role"] != role:
+                abort(403, "Admin privileges required")
+
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
 
 
 def create_app(students_collection):
@@ -25,12 +61,14 @@ def create_app(students_collection):
         return "index"
 
     @app.route('/students', methods=['GET'])
+    @requires_auth()
     def handle_students():
         students = list(students_collection.find())
         formatted_students = [create_formatted_student(student) for student in students]
         return jsonify(formatted_students)
 
     @app.route('/students', methods=['POST'])
+    @requires_auth(role="admin")
     def add_students():
         student = create_student_from_json(request.get_json())
         stt = insert_attendee(students_collection, student)
@@ -38,6 +76,7 @@ def create_app(students_collection):
 
 
     @app.route('/students/<_id>', methods=['PUT'])
+    @requires_auth(role="admin")
     def edit_student(_id):
         student_id = int(_id)
         if student_id is not None:
@@ -50,6 +89,7 @@ def create_app(students_collection):
         
 
     @app.route('/students/<_id>', methods=['DELETE'])
+    @requires_auth(role="admin")
     def delete_student(_id):
         student_id = int(_id)
         delete_attendee(students_collection, student_id)
