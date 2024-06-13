@@ -7,6 +7,7 @@ import os
 from pymongo import MongoClient
 from prometheus_client import Counter, Gauge, generate_latest
 import random
+import logging
 
 
 def create_app(students_collection):
@@ -74,6 +75,15 @@ def create_app(students_collection):
         current_memory_usage.labels('server-a').set(random.randint(10000,90000))
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
+    @app.before_request
+    def log_request_info():
+        app.logger.info('Request method: %s', request.method)
+        app.logger.info('Request path: %s', request.path)
+    @app.after_request
+    def log_response_info(response):
+        app.logger.info('Response status: %s', response.status_code)
+        return response
+
     return app
 
 
@@ -85,4 +95,6 @@ if __name__ == '__main__':
     db = client[f'{MONGODB_DATABASE}']
     students_collection = db.attendees
     app = create_app(students_collection)
+    
+
     app.run(debug=True, use_debugger=False, use_reloader=False, host="0.0.0.0")
