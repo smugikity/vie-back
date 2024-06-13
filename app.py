@@ -74,14 +74,15 @@ def create_app(students_collection):
         number_of_requests.inc()
         current_memory_usage.labels('server-a').set(random.randint(10000,90000))
         return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
-
+    log = "";
     @app.before_request
     def log_request_info():
-        app.logger.info('Request method: %s', request.method)
-        app.logger.info('Request path: %s', request.path)
+        log+='method: '+ request.method;
+        log+='path: '+ request.path;
     @app.after_request
     def log_response_info(response):
-        app.logger.info('Response status: %s', response.status_code)
+        log+='status: '+ response.status_code
+        app.logger.info(log)
         return response
 
     return app
