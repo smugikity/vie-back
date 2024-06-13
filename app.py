@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, abort
 from flask_cors import CORS
 from init import init_data
 from bson import ObjectId
@@ -8,17 +8,18 @@ from pymongo import MongoClient
 from prometheus_client import Counter, Gauge, generate_latest
 import random
 import logging
-from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+
 
 users = {
     "user1": {
-        "username": "user1",
-        "password": generate_password_hash("user"),  # Hashed password
+        "username": "user",
+        "password": ("user"),  # Hashed password
         "role": "user"
     },
     "admin": {
         "username": "admin",
-        "password": generate_password_hash("admin"),  # Hashed password
+        "password": ("admin"),  # Hashed password
         "role": "admin"
     }
 }
@@ -27,7 +28,7 @@ def authenticate(username, password):
     user = users.get(username)
     if not user:
         return False
-    return check_password_hash(user["password"], password)
+    return (user["password"] == password)
 
 def requires_auth(role="user"):
     def decorator(f):
